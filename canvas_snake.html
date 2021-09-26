@@ -1,0 +1,316 @@
+	<script src='serpienteForohtml5.js' type='text/javascript'></script>
+.....
+<body onload='init();' link="red" vlink="red" alink="red"> 
+    <div id='bar' align="center"> 
+      <span id='logo'>SNAKE - SERPIENTE</span> 
+      <div id='score_container'> 
+        score:
+        <b><span id='score'>0</span></b>
+      </div> 
+      <div id='play_menu'> 
+      </div> 
+      <div id='pause_menu'> 
+      </div> 
+      <div id='restart_menu'> 
+      </div> 
+    </div> 
+......
+<canvas id="canvas" width="400" height="300">
+       
+</canvas>
+.....
+
+
+
+<script language="javascript">
+function init(){
+    ctx = canvas.getContext('2d');
+    this.gridSize = 10;
+    start();
+}
+
+function start(){
+  ctx.clearRect(0,0, canvas.width, canvas.height);
+  this.currentPosition = {'x':50, 'y':50};
+  snakeBody = [];
+  snakeLength = 3;
+  updateScore();
+  makeFoodItem();
+  drawSnake();
+  direction = 'right';
+  play();  
+}
+
+function restart(){
+  pause();
+  start();
+}
+
+function pause(){
+  clearInterval(interval);
+  allowPressKeys = false;
+}
+
+function play(){
+  interval = setInterval(moveSnake,100);
+  allowPressKeys = true;
+}
+var colorSnake = 0; 
+function drawSnake() {
+  if (snakeBody.some(hasEatenItself)) {
+    gameOver();
+    return false;
+  }
+  
+  snakeBody.push([currentPosition['x'], currentPosition['y']]);
+  if(colorSnake==0)
+  {
+  colorSnake=1;
+  ctx.fillStyle = "rgb(200,0,0)";
+  }
+  else
+  {
+  colorSnake=0;
+  ctx.fillStyle = "rgb(0,0,0)";
+  }
+  /**-----------------------**/
+  
+  ctx.fillRect(currentPosition['x'], currentPosition['y'], gridSize, gridSize);
+  if (snakeBody.length > snakeLength) {
+    var itemToRemove = snakeBody.shift();
+    ctx.clearRect(itemToRemove[0], itemToRemove[1], gridSize, gridSize);
+  }  
+  if (currentPosition['x'] == suggestedPoint[0] && currentPosition['y'] == suggestedPoint[1]) {
+    makeFoodItem();
+    snakeLength += 1;
+    updateScore();
+  }
+}
+
+function leftPosition(){
+ return currentPosition['x'] - gridSize;  
+}
+
+function rightPosition(){
+  return currentPosition['x'] + gridSize;
+}
+
+function upPosition(){
+  return currentPosition['y'] - gridSize;  
+}
+
+function downPosition(){
+  return currentPosition['y'] + gridSize;
+}
+
+function whichWayToGo(axisType){  
+  if (axisType=='x') {
+    a = (currentPosition['x'] > canvas.width / 2) ? moveLeft() : moveRight();
+  } else {
+    a = (currentPosition['y'] > canvas.height / 2) ? moveUp() : moveDown();
+  }
+}
+
+function moveUp(){
+  if (upPosition() >= 0) {
+    executeMove('up', 'y', upPosition());
+  } else {
+    whichWayToGo('x');
+  }
+}
+
+function moveDown(){
+  if (downPosition() < canvas.height) {
+    executeMove('down', 'y', downPosition());    
+  } else {
+    whichWayToGo('x');
+  }
+}
+
+function moveLeft(){
+  if (leftPosition() >= 0) {
+    executeMove('left', 'x', leftPosition());
+  } else {
+    whichWayToGo('y');
+  }
+}
+
+function moveRight(){
+  if (rightPosition() < canvas.width) {
+    executeMove('right', 'x', rightPosition());
+  } else {
+    whichWayToGo('y');
+  }
+}
+
+function executeMove(dirValue, axisType, axisValue) {
+  direction = dirValue;
+  currentPosition[axisType] = axisValue;
+  drawSnake();
+}
+
+function makeFoodItem(){
+  suggestedPoint = [Math.floor(Math.random()*(canvas.width/gridSize))*gridSize, Math.floor(Math.random()*(canvas.height/gridSize))*gridSize];
+  if (snakeBody.some(hasPoint)) {
+    makeFoodItem();
+  } else {
+    ctx.fillStyle = "rgb(10,100,0)";
+    ctx.fillRect(suggestedPoint[0], suggestedPoint[1], gridSize, gridSize);
+  };
+}
+
+function hasPoint(element, index, array) {
+  return (element[0] == suggestedPoint[0] && element[1] == suggestedPoint[1]);
+}
+
+function hasEatenItself(element, index, array) {
+  return (element[0] == currentPosition['x'] && element[1] == currentPosition['y']);  
+}
+
+function gameOver(){
+  var score = (snakeLength - 3)*10;
+  pause();
+  //alert("Game Over. Tu puntuacion fue "+ score);
+  scoreAdd();
+  ctx.clearRect(0,0, canvas.width, canvas.height);
+  document.getElementById('play_menu').style.display='none';
+  document.getElementById('restart_menu').style.display='block';
+}
+
+
+function updateScore(){
+  var score = (snakeLength - 3)*10
+  var nave=navigator.userAgent.toLowerCase();
+
+if(nave.indexOf("firefox")!=-1)
+{
+  HTMLElement.prototype.__defineGetter__("innerText",function () { return(this.textContent); });   
+  HTMLElement.prototype.__defineSetter__("innerText",function (txt) { this.textContent = txt; });
+ }
+  document.getElementById('score').innerText = score;
+}
+
+var pauseInt = 0;
+document.onkeydown = function(event) {
+  var keyCode; 
+  if(event == null)
+  {
+    keyCode = window.event.keyCode; 
+  
+  }
+  else 
+  {
+    keyCode = event.keyCode; 
+  
+  }
+
+  switch(keyCode){
+    case 13:
+      if(pauseInt==0)      {
+        pauseInt=1;
+        pause();
+      }
+      else{
+        pauseInt=0;
+        play();
+      }
+      break;
+  
+    case 27:
+      pauseInt=0;
+      restart();
+      break;
+  
+      case 37:
+        if (direction != "right" && pauseInt!=1){
+          moveLeft();
+        }
+        break;
+     
+      case 38:
+        if (direction != "down" && pauseInt!=1){
+          moveUp();
+        }
+        break; 
+      
+      case 39:
+        if (direction != "left" && pauseInt!=1){
+          moveRight();
+        }
+        break; 
+    
+      case 40:
+        if (direction != "up" && pauseInt!=1){
+          moveDown();
+        }
+        break; 
+    /*------------------------------*/
+      default: 
+        break; 
+    } 
+}
+
+function moveSnake(){
+  switch(direction){
+    case 'up':
+      moveUp();
+      break;
+
+    case 'down':
+      moveDown();
+      break;
+      
+    case 'left':
+      moveLeft();
+      break;
+
+    case 'right':
+      moveRight();
+      break;
+  }
+}
+
+function objetoAjax() {
+  var xmlhttp;  
+if (typeof XMLHttpRequest != "undefined") 
+xmlhttp = new XMLHttpRequest(); 
+if (!xmlhttp) { 
+  try { 
+    xmlhttp = new ActiveXObject("Msxml2.XMLHTTP"); 
+  } catch( e ) {
+    try {
+      xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+    } catch( f ) {
+      xmlhttp = null;
+    }
+  }
+ }
+  return  xmlhttp;
+ }
+ 
+
+function scoreAdd(){
+  var score = (snakeLength - 3)*10;
+ var player = prompt("Game Over, score "+score, "Type your Email");
+divFormulario = document.getElementById('respuesta');
+var ajax
+//instanciamos el objetoAjax
+ajax=objetoAjax();
+divFormulario.innerHTML = "<p style=\"border:1px solid red; width:400px;\">La actualizaci&oacute;n se realiz&oacute; correctamente</p>";
+ajax.open("POST", "scoreAdd.php");
+ajax.onreadystatechange=function() {
+if (ajax.readyState==4) {
+//mostrar resultados en esta capa
+divFormulario.innerHTML = ajax.responseText
+//mostrar el formulario
+divFormulario.style.display="block";
+}
+}
+
+ajax.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+//enviando los valores
+
+ajax.send("score="+score+"&player="+player)
+} 
+
+</script>
